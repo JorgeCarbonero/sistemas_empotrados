@@ -1,0 +1,131 @@
+#include <SoftwareSerial.h>
+
+SoftwareSerial nextion(2, 3);
+
+// Pines físicos
+const int potPin = A0;
+const int redPin = 9;
+const int greenPin = 10;
+const int bluePin = 11;
+const int buttonRed = 4;
+const int buttonGreen = 5;
+const int buttonBlue = 6;
+
+// Estado de ColorMatcher
+bool playingColorMatcher = false;
+int selectedColor = 0;
+int colorValues[3] = {0, 0, 0};
+int targetColor[3] = {0, 0, 0};
+
+void setup() {
+  nextion.begin(9600);
+  Serial.begin(9600);
+
+  pinMode(redPin, OUTPUT);
+  pinMode(greenPin, OUTPUT);
+  pinMode(bluePin, OUTPUT);
+
+  pinMode(buttonRed, INPUT_PULLUP);
+  pinMode(buttonGreen, INPUT_PULLUP);
+  pinMode(buttonBlue, INPUT_PULLUP);
+
+  randomSeed(analogRead(A1)); 
+  resetColorMatcher();
+}
+
+void loop() {
+  if (nextion.available()) {
+    String cmd = readNextion();
+    if (cmd == "startColorMatcher") {
+      startColorMatcherGame();
+    } else if (cmd == "submitColorMatcher") {
+      submitColorMatcherGame();
+    }
+  }
+
+  if (playingColorMatcher) {
+    handleButtonsColorMatcher();
+    handlePotColorMatcher();
+    updateLEDColorMatcher();
+    sendCurrentRGBColorMatcher();
+  }
+}
+
+// Funciones ColorMatcher
+
+void startColorMatcherGame() {
+  targetColor[0] = random(0, 256);
+  targetColor[1] = random(0, 256);
+  targetColor[2] = random(0, 256);
+  
+  int color24bit = (targetColor[0] << 16) | (targetColor[1] << 8) | (targetColor[2]);
+  sendCommand("b0.bco=" + String(color24bit));
+  sendCommand("ref b0");
+
+  resetColorMatcher();
+  playingColorMatcher = true;
+}
+
+void submitColorMatcherGame() {
+  bool success = true;
+  for (int i = 0; i < 3; i++) {
+    if (abs(colorValues[i] - targetColor[i]) > 10) {
+      success = false;
+    }
+  }
+  if (success) {
+    sendCommand("successColorMatcher");
+  } else {
+    sendCommand("failColorMatcher");
+  }
+  playingColorMatcher = false;
+}
+
+void resetColorMatcher() {
+  colorValues[0] = 0;
+  colorValues[1] = 0;
+  colorValues[2] = 0;
+}
+
+void handleButtonsColorMatcher() {
+  if (digitalRead(buttonRed) == LOW) { selectedColor = 0; delay(200); }
+  if (digitalRead(buttonGreen) == LOW) { selectedColor = 1; delay(200); }
+  if (digitalRead(buttonBlue) == LOW) { selectedColor = 2; delay(200); }
+}
+
+void handlePotColorMatcher() {
+  int potValue = analogRead(potPin);
+  int mappedValue = map(potValue, 0, 1023, 0, 255);
+  colorValues[selectedColor] = mappedValue;
+}
+
+void updateLEDColorMatcher() {
+  analogWrite(redPin, colorValues[0]);
+  analogWrite(greenPin, colorValues[1]);
+  analogWrite(bluePin, colorValues[2]);
+}
+
+void sendCurrentRGBColorMatcher() {
+  sendCommand("t1.txt=\"Red:" + String(colorValues[0]) + "\"");
+  sendCommand("t2.txt=\"Green:" + String(colorValues[1]) + "\"");
+  sendCommand("t3.txt=\"Blue:" + String(colorValues[2]) + "\"");
+}
+
+// Utilidades generales
+
+void sendCommand(String cmd) {
+  nextion.print(cmd);
+  nextion.write(0xFF);
+  nextion.write(0xFF);
+  nextion.write(0xFF);
+}
+
+String readNextion() {
+  String content = "";
+  while (nextion.available()) {
+    char c = nextion.read();
+    if (c == 0xFF) break;
+    content += c;
+  }
+  return content;
+}
