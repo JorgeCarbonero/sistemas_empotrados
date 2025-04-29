@@ -1,6 +1,3 @@
-
-
-
 #ifndef __NEXTION_H__
 
   #define __NEXTION_H__
@@ -30,7 +27,6 @@
   #define pinTX 16
   #define pinRX 17  
   
-     
   bool initNEXTION(const char* pageId ="0");              
   void sendNEXTIONcmd(const char* cmd);             	  
   String listenNEXTION(void);            

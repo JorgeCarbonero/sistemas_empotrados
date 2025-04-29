@@ -1,6 +1,3 @@
-
-
-
 #ifndef _NEXTION_OBJECT_H_
 
   #define _NEXTION_OBJECT_H_

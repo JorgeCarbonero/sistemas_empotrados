@@ -1,6 +1,5 @@
 #include "NextionSoftSerial.h"
 
-
 /*****************************************************
  * Send command to Nextion.                          *
  *                                                   *
@@ -32,7 +31,7 @@ String page = "page " + String(pageId);
 }
   
 void Nextion_flushSerial(){
-   Serial2.flush();
+  Serial2.flush();
 }//end flush
 
 
@@ -47,25 +46,21 @@ int countEnd = 0;
 
   while(Serial2.available()>0)
   {
- 
-      bBYTE = Serial2.read();
-      sprintf(sBYTE,"[%02x]",bBYTE);
-      cmd += sBYTE;
-      
-      if(bBYTE == _end) countEnd++;
-      if(countEnd == 3)
-      { 
-        Serial2.flush();
-        return cmd;
-        break;
-      }//end if
-      
-     
+    bBYTE = Serial2.read();
+    sprintf(sBYTE,"[%02x]",bBYTE);
+    cmd += sBYTE;
+    
+    if(bBYTE == _end) countEnd++;
+    if(countEnd == 3)
+    { 
+      Serial2.flush();
+      return cmd;
+      break;
+    }//end if
   }//end while
   Serial2.flush();
   cmd=String("");
   return cmd;
- 
 }//end evNextion
 
 
@@ -79,32 +74,25 @@ int countEnd = 0;
 
   if(Serial2.available()>0)
   {// available
-    
+    bBYTE = Serial2.read();
+    if ( (bBYTE==NEX_RET_NUMBER_HEAD) || (bBYTE==NEX_RET_EVENT_TOUCH_HEAD ) || (NEX_RET_CURRENT_PAGE_ID_HEAD)  )
+    {// hay CMD
+      cmd ="[";
+      sprintf(sBYTE,"%x",bBYTE);
+      cmd += sBYTE;
+      
+      while(Serial2.available()>0)
+      {//while
+        delay(5);    	
         bBYTE = Serial2.read();
-        if ( (bBYTE==NEX_RET_NUMBER_HEAD) || (bBYTE==NEX_RET_EVENT_TOUCH_HEAD ) || (NEX_RET_CURRENT_PAGE_ID_HEAD)  )
-        {// hay CMD
-          
-            cmd ="[";
-            sprintf(sBYTE,"%x",bBYTE);
-            cmd += sBYTE;
-            
-            while(Serial2.available()>0)
-            {//while
-              
-          	  delay(5);    	
-          	  bBYTE = Serial2.read();
-          	  sprintf(sBYTE,"%x",bBYTE);
-              cmd += sBYTE;
-          	  if(bBYTE == _end) countEnd++;
-          	  if(countEnd == 3)break;
-             
-             }//while             
-             cmd +="]";
-             
-        }// hay CMD
-        
+        sprintf(sBYTE,"%x",bBYTE);
+        cmd += sBYTE;
+        if(bBYTE == _end) countEnd++;
+        if(countEnd == 3)break;
+      }//while
+      cmd +="]";
+    }// hay CMD
 	}// available
   
   return cmd;
-  
 }
