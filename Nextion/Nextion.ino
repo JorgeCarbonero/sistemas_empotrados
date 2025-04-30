@@ -1,12 +1,26 @@
-#include "NextionSoftSerial.h"      // ha sido modificado para aceptar Serial2 Hardware ESP32
+#include "NextionSoftSerial.h"
 #include "NextionObject.h"
 
-/********************************************************/
-/* void setup()                                         */
-/********************************************************/
-void setup()
-{
-char cmd[100];
+// Pines físicos
+const int potPin = A0;
+const int redPin = 9;
+const int greenPin = 10;
+const int bluePin = 11;
+const int buttonRed = 4;
+const int buttonGreen = 5;
+const int buttonBlue = 6;
+
+// Estado de ColorMatcher OBJETO
+bool playingColorMatcher = false;
+int selectedColor = 0;
+int colorValues[3] = {0, 0, 0};
+int targetColor[3] = {0, 0, 0};
+
+// Estados de pantalla
+String currentPage = "pageHome";
+
+void setup() {
+  char cmd[100];
 
   Serial.begin(115200);
 
@@ -22,23 +36,27 @@ char cmd[100];
   Serial.println(cmd); 
   sendNEXTIONcmd("xstr 0,18,390,18,1,RED,WHITE,0,1,1,\"SYSTEM> Initializing ... Nextion_SoftSerial\"");
   delay(1500);
+  
+  pinMode(redPin, OUTPUT);
+  pinMode(greenPin, OUTPUT);
+  pinMode(bluePin, OUTPUT);
+
+  pinMode(buttonRed, INPUT_PULLUP);
+  pinMode(buttonGreen, INPUT_PULLUP);
+  pinMode(buttonBlue, INPUT_PULLUP);
+
+  randomSeed(analogRead(A1)); 
+  resetColorMatcher();
 }
 
-
-/********************************************************/
-/* void loop()                                          */
-/********************************************************/
-void loop()
-{// ... loop
-String ev;
-char cmd[100];
-
-  ev=listenNEXTION();
-  if (ev != "" )
-  {
-    Serial.print("\r\nTFT> ev=");
+void loop() {
+  String ev = listenNEXTION();
+  
+  if (ev != "") {
+    Serial.print("Evento recibido: ");
     Serial.println(ev.c_str());
-
+    Serial.println(ev);
+    
     if (ev==bStart) 
     {
       strcpy(cmd,"\r\nSYSTEM> bStart push");
@@ -46,7 +64,120 @@ char cmd[100];
 
       sendNEXTIONcmd("xstr 0,18,390,18,1,RED,WHITE,0,1,1,\"SYSTEM> ... bStart push\"");
     }
+
+    // Manejo de cambio de página
+    if (ev==bGame4) {
+      handlePageChange(5);
+    }
+    
+    case ///// TAREK!!!
+    // Comandos específicos de ColorMatcher
+    if (currentPage == "pageColor") {
+      if (ev == "[65001ffffffffffff]") {  // startColorMatcher
+        startColorMatcherGame();
+      } else if (ev == "[65002ffffffffffff]") {  // submitColorMatcher
+        submitColorMatcherGame();
+      }
+    }
+  }
+
+  if (playingColorMatcher && currentPage == "pageColor") {
+    handleButtonsColorMatcher();
+    handlePotColorMatcher();
+    updateLEDColorMatcher();
+    sendCurrentRGBColorMatcher();
   }
   
   delay(100);
-}// ... loop
+}
+
+// Manejo de cambio de página
+void handlePageChange(int pageId) {
+  String pageCommand;
+  
+  switch(pageId) {
+    case 0: 
+      currentPage = "pageHome";
+      pageCommand = "page 0";
+      break;
+    case 5: 
+      currentPage = "pageColor"; 
+      pageCommand = "page pageColor";
+      break;
+    default: 
+      currentPage = "unknown";
+      pageCommand = "page 0";  // Por defecto volvemos a página 0
+      break;
+  }
+  
+  // Confirmar el cambio de página a Nextion
+  sendNEXTIONcmd(pageCommand.c_str());
+  
+  Serial.print("Cambiando a página: ");
+  Serial.println(currentPage);
+  
+  // Esperar un poco para que se complete el cambio
+  delay(100);
+}
+
+// Funciones ColorMatcher (sin cambios en la lógica)
+void startColorMatcherGame() {
+  targetColor[0] = random(0, 256);
+  targetColor[1] = random(0, 256);
+  targetColor[2] = random(0, 256);
+  
+  int color24bit = (targetColor[0] << 16) | (targetColor[1] << 8) | (targetColor[2]);
+  sendNEXTIONcmd("b0.bco=" + String(color24bit)); #texto 
+  sendNEXTIONcmd("ref b0");
+
+  resetColorMatcher();
+  playingColorMatcher = true;
+}
+
+void submitColorMatcherGame() {
+  bool success = true;
+  for (int i = 0; i < 3; i++) {
+    if (abs(colorValues[i] - targetColor[i]) > 10) {
+      success = false;
+    }
+  }
+  if (success) {
+    sendNEXTIONcmd("game4=1");
+  } else {
+    sendNEXTIONcmd("pageColor.fail.en=1"); #error
+  }
+  playingColorMatcher = false;
+}
+
+void resetColorMatcher() {
+  colorValues[0] = 0;
+  colorValues[1] = 0;
+  colorValues[2] = 0;
+}
+
+void handleButtonsColorMatcher() {
+  if (digitalRead(buttonRed) == HIGH) { selectedColor = 0; delay(200); }
+  if (digitalRead(buttonGreen) == HIGH) { selectedColor = 1; delay(200); }
+  if (digitalRead(buttonBlue) == HIGH) { selectedColor = 2; delay(200); }
+}
+
+void handlePotColorMatcher() {
+  int potValue = analogRead(potPin);
+  int mappedValue = map(potValue, 0, 1023, 0, 255);
+  colorValues[selectedColor] = mappedValue;
+}
+
+void updateLEDColorMatcher() {
+  analogWrite(redPin, colorValues[0]);
+  analogWrite(greenPin, colorValues[1]);
+  analogWrite(bluePin, colorValues[2]);
+}
+
+void sendCurrentRGBColorMatcher() {
+  sendNEXTIONcmd("t1.txt=\"Red:" + String(colorValues[0]) + "\"");
+  sendNEXTIONcmd("t2.txt=\"Green:" + String(colorValues[1]) + "\"");
+  sendNEXTIONcmd("t3.txt=\"Blue:" + String(colorValues[2]) + "\"");
+  sendNEXTIONcmd("ref t1");
+  sendNEXTIONcmd("ref t2");
+  sendNEXTIONcmd("ref t3");
+}
