@@ -1,14 +1,22 @@
 #include "NextionSoftSerial.h"
 #include "NextionObject.h"
+#include "SimonGame.h"
 
 // Pines físicos
 const int potPin = A0;
 const int redPin = 9;
 const int greenPin = 10;
 const int bluePin = 11;
+const int whitePin = 12
 const int buttonRed = 4;
 const int buttonGreen = 5;
 const int buttonBlue = 6;
+const int buttonWhite = 7;
+
+// Variables SimonGame
+const int simonEntradas[4] = {buttonRed, buttonGreen, buttonBlue, buttonWhite};
+const int simonSalidas [4] = {redPin,   greenPin,   bluePin,   whitePin};
+SimonGame simon(simonEntradasm, simonsalidas)
 
 // Estado de ColorMatcher OBJETO
 bool playingColorMatcher = false;
@@ -40,10 +48,12 @@ void setup() {
   pinMode(redPin, OUTPUT);
   pinMode(greenPin, OUTPUT);
   pinMode(bluePin, OUTPUT);
+  pinMode(whitePin, OUTPUT)
 
   pinMode(buttonRed, INPUT_PULLUP);
   pinMode(buttonGreen, INPUT_PULLUP);
   pinMode(buttonBlue, INPUT_PULLUP);
+  pinMode(buttonWhite, INPUT_PULLUP)
 
   randomSeed(analogRead(A1)); 
   resetColorMatcher();
@@ -65,18 +75,39 @@ void loop() {
       sendNEXTIONcmd("xstr 0,18,390,18,1,RED,WHITE,0,1,1,\"SYSTEM> ... bStart push\"");
     }
 
+    if (ev==bGame1){
+      handlePageChange(2)
+    }
+
+    if (ev==bGame2){
+      handlePageChange(3)
+    }
+
     // Manejo de cambio de página
     if (ev==bGame4) {
       handlePageChange(5);
+    }
+
+    if (currentPage == "pageSimon") {
+      if (ev == "[65001ffffffffffff]") {  // startSimonGame
+        bool won = simon.playFullGame();
+         if (won) {
+          // aquí puedes, por ejemplo, volver al Home o mostrar “¡Has ganado!”
+          sendNEXTIONcmd("page 0");
+        } else {
+          // si ha fallado, mostrar pantalla de “Game Over” en Nextion
+          sendNEXTIONcmd("page pageSimonFail");
+        }
+      } 
     }
     
     case ///// TAREK!!!
     // Comandos específicos de ColorMatcher
     if (currentPage == "pageColor") {
       if (ev == "[65001ffffffffffff]") {  // startColorMatcher
-        startColorMatcherGame();
+        
       } else if (ev == "[65002ffffffffffff]") {  // submitColorMatcher
-        submitColorMatcherGame();
+        
       }
     }
   }
@@ -99,6 +130,14 @@ void handlePageChange(int pageId) {
     case 0: 
       currentPage = "pageHome";
       pageCommand = "page 0";
+      break;
+    case 2:
+      currentPage = "PageSimon";
+      pageCommand = "page 2";
+      break;
+    case 3:
+      currentPage = "PageDodge";
+      pageCommand = "page 3";
       break;
     case 5: 
       currentPage = "pageColor"; 

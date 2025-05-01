@@ -4,6 +4,8 @@
 
   // NEXTION OBJECT
   #define bStart    ("[65011ffffffffffff]")
+  #define bGame1    ("[65141ffffffffffff]")
+  #define bGame2    ("[65151ffffffffffff]")
   #define bGame4    ("[65171ffffffffffff]")
 
 
