@@ -12,11 +12,16 @@ const int buttonRed = 4;
 const int buttonGreen = 5;
 const int buttonBlue = 6;
 const int buttonWhite = 7;
+const int joyX = A3
+const int joyY = A4
 
-// Variables SimonGame
+// SimonGame
 const int simonEntradas[4] = {buttonRed, buttonGreen, buttonBlue, buttonWhite};
 const int simonSalidas [4] = {redPin,   greenPin,   bluePin,   whitePin};
 SimonGame simon(simonEntradasm, simonsalidas)
+
+// DodgeGame
+DodgeGame dodge(joyX, joyY);
 
 // Estado de ColorMatcher OBJETO
 bool playingColorMatcher = false;
@@ -54,6 +59,9 @@ void setup() {
   pinMode(buttonGreen, INPUT_PULLUP);
   pinMode(buttonBlue, INPUT_PULLUP);
   pinMode(buttonWhite, INPUT_PULLUP)
+
+  pinMode(_pinX, INPUT);
+  pinMode(_pinY, INPUT);
 
   randomSeed(analogRead(A1)); 
   resetColorMatcher();
@@ -101,6 +109,14 @@ void loop() {
       } 
     }
     
+    if (currentPage == "pageSimon") {
+      if (ev == bGame2Start) { 
+        dodge.startGame();
+      } else if (ev == bGame2End) {
+        dodge.endGame();
+      }
+    }
+
     case ///// TAREK!!!
     // Comandos específicos de ColorMatcher
     if (currentPage == "pageColor") {
@@ -110,6 +126,10 @@ void loop() {
         
       }
     }
+  }
+  
+  if (currentPage == "pageDodge") {
+    dodge.update();
   }
 
   if (playingColorMatcher && currentPage == "pageColor") {
