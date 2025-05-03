@@ -63,6 +63,10 @@ void SimonGame::muestraSecuencia() {
         sendNEXTIONcmd("t0.txt=\"Mostrando: " + String(colorNames[idx]) + "\"");
         sendNEXTIONcmd("ref t0");
 
+        // Mostrar en arduino
+        Serial.print("Mostrando: ");
+        Serial.println(String(colorNames[idx]));
+
         // Encender LED
         digitalWrite(_salida[idx], HIGH);
         delay(_velocidad);
@@ -80,6 +84,10 @@ void SimonGame::leeSecuencia() {
                     // Mostrar en Nextion
                     sendNEXTIONcmd("t0.txt=\"Has pulsado: " + String(colorNames[btn]) + "\"");
                     sendNEXTIONcmd("ref t0");
+
+                    // Mostrar en arduino
+                    Serial.print("Has pulsado: ");
+                    Serial.println(String(colorNames[btn]));
 
                     // Feedback visual
                     digitalWrite(_salida[btn], HIGH);

@@ -5,9 +5,10 @@
   // NEXTION OBJECT
   #define bStart         ("[65011ffffffffffff]")
   #define bGame1         ("[65141ffffffffffff]")
+  #define bGame1Start    ("STARTGAME1") 
   #define bGame2         ("[65151ffffffffffff]") 
-  #define bGame2Start    ("[65151ffffffffffff]") // cambiar
-  #define bGame2End      ("[65151ffffffffffff]") // cambiar 
+  #define bGame2Start    ("STARTGAME2") 
+  #define bGame2End      ("ENDGAME2") 
   #define bGame4         ("[65171ffffffffffff]")
 
 

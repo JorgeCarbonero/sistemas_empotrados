@@ -97,14 +97,12 @@ void loop() {
     }
 
     if (currentPage == "pageSimon") {
-      if (ev == "[65001ffffffffffff]") {  // startSimonGame
+      if (ev == bGame1Start) {  // startSimonGame
         bool won = simon.playFullGame();
          if (won) {
-          // aquí puedes, por ejemplo, volver al Home o mostrar “¡Has ganado!”
-          sendNEXTIONcmd("page 0");
+          sendNEXTIONcmd("vaState.val=2");
         } else {
-          // si ha fallado, mostrar pantalla de “Game Over” en Nextion
-          sendNEXTIONcmd("page pageSimonFail");
+          sendNEXTIONcmd("vaState.val=1");
         }
       } 
     }
