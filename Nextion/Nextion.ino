@@ -2,6 +2,7 @@
 #include "NextionObject.h"
 #include "SimonGame.h"
 #include "DodgeGame.h"
+#include "ColorMatcher.h"
 
 // Pines físicos
 const int potPin = A0;
@@ -22,6 +23,7 @@ const int simonSalidas [4] = {redPin,   greenPin,   bluePin,   whitePin};
 SimonGame simon(simonEntradas, simonSalidas);
 // DodgeGame
 DodgeGame dodge(joyX, joyY);
+ColorMatcher colorMatcher(potPin, buttonRed, buttonGreen, buttonBlue);
 
 // Estado de ColorMatcher OBJETO
 bool playingColorMatcher = false;
@@ -64,7 +66,7 @@ void setup() {
   pinMode(joyY, INPUT);
 
   randomSeed(analogRead(A1)); 
-  resetColorMatcher();
+  colorMatcher.init();
 }
 
 void loop() {
@@ -74,7 +76,7 @@ void loop() {
   if (ev != "") {
     Serial.print("Evento recibido: ");
     Serial.println(ev.c_str());
-    Serial.println(ev);
+    //Serial.println(ev);
     
     if (ev==bStart) 
     {
@@ -83,8 +85,6 @@ void loop() {
 
       sendNEXTIONcmd("xstr 0,18,390,18,1,RED,WHITE,0,1,1,\"SYSTEM> ... bStart push\"");
     }
-
-
 
     if (ev==bGame1){
       handlePageChange(2);
@@ -96,6 +96,7 @@ void loop() {
 
     // Manejo de cambio de página
     if (ev==bGame4) {
+      colorMatcher.setPlaying(false);
       handlePageChange(5);
     }
 
@@ -106,7 +107,7 @@ void loop() {
         simon.playFullGame();
       } 
     }
-    Serial.print("currentPage 1: "+ currentPage);
+    Serial.println("currentPage 1: "+ currentPage);
 
     if (currentPage == "PageDodge") {
       if (ev == bGame2Start) { 
@@ -117,25 +118,29 @@ void loop() {
       }
     }
 
-    // Comandos específicos de ColorMatcher
+    if (currentPage == "PageSimon" && ev == bGame1Start) {
+      bool won = simon.playFullGame();
+      sendNEXTIONcmd((String("vaState.val=") + (won ? "2" : "1")).c_str());
+    }
+
     if (currentPage == "pageColor") {
-      if (ev == "[65001ffffffffffff]") {  // startColorMatcher
-        
-      } else if (ev == "[65002ffffffffffff]") {  // submitColorMatcher
-        
+      Serial.println("MAL");
+      if (ev == bColorStart) {
+        Serial.println("Start");
+      }
+      if (ev == bColorSubmit) {
+        Serial.println("submit");
       }
     }
+
   }
   
   if (currentPage == "PageDodge") {
     dodge.update();
   }
 
-  if (playingColorMatcher && currentPage == "pageColor") {
-    handleButtonsColorMatcher();
-    handlePotColorMatcher();
-    updateLEDColorMatcher();
-    sendCurrentRGBColorMatcher();
+  if (currentPage == "pageColor") {
+    colorMatcher.update();
   }
   
   delay(100);
@@ -176,78 +181,4 @@ void handlePageChange(int pageId) {
   
   // Esperar un poco para que se complete el cambio
   delay(100);
-}
-
-// Funciones ColorMatcher (sin cambios en la lógica)
-void startColorMatcherGame() {
-  targetColor[0] = random(0, 256);
-  targetColor[1] = random(0, 256);
-  targetColor[2] = random(0, 256);
-  
-  int color24bit = (targetColor[0] << 16) | (targetColor[1] << 8) | (targetColor[2]);
-  String cmd = String("b0.bco=");  
-  cmd += color24bit;                
-  sendNEXTIONcmd(cmd.c_str()); 
-  sendNEXTIONcmd("ref b0");
-
-  resetColorMatcher();
-  playingColorMatcher = true;
-}
-
-void submitColorMatcherGame() {
-  bool success = true;
-  for (int i = 0; i < 3; i++) {
-    if (abs(colorValues[i] - targetColor[i]) > 10) {
-      success = false;
-    }
-  }
-  if (success) {
-    sendNEXTIONcmd("game4=1");
-  } else {
-    sendNEXTIONcmd("pageColor.fail.en=1"); //error
-  }
-  playingColorMatcher = false;
-}
-
-void resetColorMatcher() {
-  colorValues[0] = 0;
-  colorValues[1] = 0;
-  colorValues[2] = 0;
-}
-
-void handleButtonsColorMatcher() {
-  if (digitalRead(buttonRed) == HIGH) { selectedColor = 0; delay(200); }
-  if (digitalRead(buttonGreen) == HIGH) { selectedColor = 1; delay(200); }
-  if (digitalRead(buttonBlue) == HIGH) { selectedColor = 2; delay(200); }
-}
-
-void handlePotColorMatcher() {
-  int potValue = analogRead(potPin);
-  int mappedValue = map(potValue, 0, 1023, 0, 255);
-  colorValues[selectedColor] = mappedValue;
-}
-
-void updateLEDColorMatcher() {
-  analogWrite(redPin, colorValues[0]);
-  analogWrite(greenPin, colorValues[1]);
-  analogWrite(bluePin, colorValues[2]);
-}
-
-void sendCurrentRGBColorMatcher() {
-  char buf[32];
-
-  // Red
-  snprintf(buf, sizeof(buf), "t1.txt=\"Red:%d\"",   colorValues[0]);
-  sendNEXTIONcmd(buf);
-
-  // Green
-  snprintf(buf, sizeof(buf), "t2.txt=\"Green:%d\"", colorValues[1]);
-  sendNEXTIONcmd(buf);
-
-  // Blue
-  snprintf(buf, sizeof(buf), "t3.txt=\"Blue:%d\"",  colorValues[2]);
-  sendNEXTIONcmd(buf);
-  sendNEXTIONcmd("ref t1");
-  sendNEXTIONcmd("ref t2");
-  sendNEXTIONcmd("ref t3");
 }

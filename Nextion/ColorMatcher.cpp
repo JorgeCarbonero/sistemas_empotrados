@@ -1,126 +1,111 @@
-#include <Arduino.h>
-#include "NextionSoftSerial.h"
+// ---------------------------
+//  Archivo: ColorMatcher.cpp
+// ---------------------------
+#include "ColorMatcher.h"
 
-class ColorMatcher {
-private:
-  int colorValues[3] = {0, 0, 0};
-  int targetColor[3] = {0, 0, 0};
-  int selectedColor = 0;
-  bool isPlaying = false;
-  bool isStarted = false;
-  const int redPin = 9;
-  const int bluePin = 11;
-  const int greenPin = 10;
-  const int potPin = A0;
-  const int buttonRed = 4;
-  const int buttonGreen = 5;
-  const int buttonBlue = 6;
+ColorMatcher::ColorMatcher(int potPin, int btnR, int btnG, int btnB)
+ : _potPin(potPin), _buttonRed(btnR), _buttonGreen(btnG), _buttonBlue(btnB) {
+    reset();
+}
 
-public:
-  void init() {
+void ColorMatcher::setPlaying(bool p) {
+  _isPlaying = p;
+}
+
+void ColorMatcher::init() {
     reset();
     randomSeed(analogRead(A1));
-  }
+}
 
-  void handleEvent(String ev) {
-    if (ev == "[65001ffffffffffff]") {  // toggle start/stop
-      if (!isStarted) {
-        startGame();
-        isStarted = true;
-      } else {
-        stopGame();
-        isStarted = false;
-      }
-    } else if (ev == "[65002ffffffffffff]") {
-      submitGame();
+void ColorMatcher::handleEvent(const String& ev) {
+    if (ev == bColorStart) {
+        if (!_isPlaying) {
+          Serial.print("Hello im dead");          
+          startGame();
+        }
+        else            stopGame();
     }
-  }
+    else if (ev == bColorSubmit) {
+        submitGame();
+    }
+}
 
-  void update() {
-    if (!isPlaying) return;
+void ColorMatcher::update() {
+    if (!_isPlaying) return;
     handleButtons();
     handlePot();
-    updateLEDs();
     updateNextionDisplay();
-  }
+}
 
-  void startGame() {
+void ColorMatcher::startGame() {
+    // 1) Generar color objetivo
     for (int i = 0; i < 3; i++) {
-      targetColor[i] = random(0, 256);
+        _targetColor[i] = random(0, 256);
     }
+    int rndColor = (_targetColor[0] << 16) | (_targetColor[1] << 8) | _targetColor[2];
 
-    int color24bit = (targetColor[0] << 16) | (targetColor[1] << 8) | targetColor[2];
-    String cmd = String("b0.bco=");
-    cmd += color24bit;
-    sendNEXTIONcmd(cmd.c_str());
+    // 2) Pintar b0 con color aleatorio
+    sendNEXTIONcmd((String("b0.bco=") + rndColor).c_str());
+    Serial.println((String("b0.bco=") + rndColor).c_str());
     sendNEXTIONcmd("ref b0");
 
+    // 3) Pintar b1 en blanco
+    sendNEXTIONcmd("b1.bco=16777215"); // 0xFFFFFF
+    sendNEXTIONcmd("ref b1");
+
+    // 4) Reiniciar valores y activar juego
     reset();
-    isPlaying = true;
-  }
+    _isPlaying = true;
+}
 
-  void stopGame() {
-    isPlaying = false;
+void ColorMatcher::stopGame() {
+    _isPlaying = false;
     sendNEXTIONcmd("pageColor.fail.en=0");
-  }
+}
 
-  void submitGame() {
+void ColorMatcher::submitGame() {
     bool success = true;
-    for (int i = 0; i < 3; i++) {
-      if (abs(colorValues[i] - targetColor[i]) > 10) {
-        success = false;
-      }
+    for (int i = 0; i < 3; ++i) {
+        if (abs(_colorValues[i] - _targetColor[i]) > 10) {
+            success = false;
+            break;
+        }
     }
     if (success) {
-      sendNEXTIONcmd("game4=1");
+        sendNEXTIONcmd("game4=1");
     } else {
-      sendNEXTIONcmd("pageColor.fail.en=1");
+        sendNEXTIONcmd("pageColor.fail.en=1");
     }
-    isPlaying = false;
-    isStarted = false;
-  }
+    _isPlaying = false;
+}
 
-  void reset() {
-    colorValues[0] = 0;
-    colorValues[1] = 0;
-    colorValues[2] = 0;
-  }
+void ColorMatcher::reset() {
+    for (int i = 0; i < 3; ++i) _colorValues[i] = 0;
+    _selectedColor = 0;
+    _isPlaying = false;
+}
 
-  void handleButtons() {
-    if (digitalRead(buttonRed) == HIGH) { selectedColor = 0; delay(200); }
-    if (digitalRead(buttonGreen) == HIGH) { selectedColor = 1; delay(200); }
-    if (digitalRead(buttonBlue) == HIGH) { selectedColor = 2; delay(200); }
-  }
+void ColorMatcher::handleButtons() {
+    if (digitalRead(_buttonRed)   == HIGH) { _selectedColor = 0; delay(200); }
+    if (digitalRead(_buttonGreen) == HIGH) { _selectedColor = 1; delay(200); }
+    if (digitalRead(_buttonBlue)  == HIGH) { _selectedColor = 2; delay(200); }
+}
 
-  void handlePot() {
-    int potValue = analogRead(potPin);
-    int mappedValue = map(potValue, 0, 1023, 0, 255);
-    colorValues[selectedColor] = mappedValue;
-  }
+void ColorMatcher::handlePot() {
+    int pot = analogRead(_potPin);
+    _colorValues[_selectedColor] = map(pot, 0, 1023, 0, 255);
+}
 
-  void updateLEDs() {
-    analogWrite(redPin, colorValues[0]);
-    analogWrite(greenPin, colorValues[1]);
-    analogWrite(bluePin, colorValues[2]);
-  }
+void ColorMatcher::updateNextionDisplay() {
+    // 1) Mostrar valores en texto
+    char buf[40];
+    snprintf(buf, sizeof(buf), "t1.txt=\"Red:%d\"",   _colorValues[0]); sendNEXTIONcmd(buf);
+    snprintf(buf, sizeof(buf), "t2.txt=\"Green:%d\"", _colorValues[1]); sendNEXTIONcmd(buf);
+    snprintf(buf, sizeof(buf), "t3.txt=\"Blue:%d\"",  _colorValues[2]); sendNEXTIONcmd(buf);
+    sendNEXTIONcmd("ref t1"); sendNEXTIONcmd("ref t2"); sendNEXTIONcmd("ref t3");
 
-  void updateNextionDisplay() {
-    char buf[32];
-
-    // Red
-    snprintf(buf, sizeof(buf), "t1.txt=\"Red:%d\"",   colorValues[0]);
-    sendNEXTIONcmd(buf);
-
-    // Green
-    snprintf(buf, sizeof(buf), "t2.txt=\"Green:%d\"", colorValues[1]);
-    sendNEXTIONcmd(buf);
-
-    // Blue
-    snprintf(buf, sizeof(buf), "t3.txt=\"Blue:%d\"",  colorValues[2]);
-    sendNEXTIONcmd(buf);
-
-    sendNEXTIONcmd("ref t1");
-    sendNEXTIONcmd("ref t2");
-    sendNEXTIONcmd("ref t3");
-  }
-};
+    // 2) Pintar b1 con el color actual
+    int c = (_colorValues[0] << 16) | (_colorValues[1] << 8) | _colorValues[2];
+    sendNEXTIONcmd((String("b1.bco=") + c).c_str());
+    sendNEXTIONcmd("ref b1");
+}

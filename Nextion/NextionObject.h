@@ -11,11 +11,8 @@
   #define bGame2Start    ("[653181ffffffffffff]") 
   #define bGame2End      ("[ffffffffffffffff]") 
   #define bGame4         ("[65171ffffffffffff]")
+  #define bColorStart    ("[ffffffa2ffa2ffa2]")
+  #define bColorSubmit   ("[ffa2ffdcffdcffdc]")
 
 
-
-
-  // Juego ColorMatcher pageId 5
-  //#define
-  //#define
 #endif
