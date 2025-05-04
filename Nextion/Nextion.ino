@@ -83,6 +83,8 @@ void loop() {
       sendNEXTIONcmd("xstr 0,18,390,18,1,RED,WHITE,0,1,1,\"SYSTEM> ... bStart push\"");
     }
 
+    
+
     if (ev==bGame1){
       handlePageChange(2)
     }
