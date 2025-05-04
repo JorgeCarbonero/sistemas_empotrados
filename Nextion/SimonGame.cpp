@@ -16,14 +16,6 @@ SimonGame::SimonGame(const int entradaPins[4],
     }
 }
 
-void SimonGame::begin() {
-    for (int i = 0; i < 4; i++) {
-        pinMode(_entrada[i], INPUT_PULLUP);
-        pinMode(_salida[i], OUTPUT);
-        digitalWrite(_salida[i], LOW);
-    }
-}
-
 void SimonGame::update() {
     if (_nivelActual == 1) generaSecuencia();
     muestraSecuencia();
@@ -60,7 +52,10 @@ void SimonGame::muestraSecuencia() {
         int idx = _secuencia[i];
 
         // Mostrar en Nextion
-        sendNEXTIONcmd("t0.txt=\"Mostrando: " + String(colorNames[idx]) + "\"");
+        String cmd = String("t0.txt=\"Mostrando: ");
+        cmd += colorNames[idx];
+        cmd += "\"";
+        sendNEXTIONcmd(cmd.c_str());
         sendNEXTIONcmd("ref t0");
 
         // Mostrar en arduino
@@ -82,7 +77,10 @@ void SimonGame::leeSecuencia() {
             for (int btn = 0; btn < 4; btn++) {
                 if (digitalRead(_entrada[btn]) == LOW) {
                     // Mostrar en Nextion
-                    sendNEXTIONcmd("t0.txt=\"Has pulsado: " + String(colorNames[btn]) + "\"");
+                    String cmd = String("t0.txt=\"Has pulsado: ");
+                    cmd += colorNames[btn];
+                    cmd += "\"";
+                    sendNEXTIONcmd(cmd.c_str());
                     sendNEXTIONcmd("ref t0");
 
                     // Mostrar en arduino

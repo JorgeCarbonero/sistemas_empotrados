@@ -1,3 +1,6 @@
+#include <Arduino.h>
+#include "NextionSoftSerial.h"
+
 class ColorMatcher {
 private:
   int colorValues[3] = {0, 0, 0};
@@ -5,6 +8,13 @@ private:
   int selectedColor = 0;
   bool isPlaying = false;
   bool isStarted = false;
+  const int redPin = 9;
+  const int bluePin = 11;
+  const int greenPin = 10;
+  const int potPin = A0;
+  const int buttonRed = 4;
+  const int buttonGreen = 5;
+  const int buttonBlue = 6;
 
 public:
   void init() {
@@ -40,7 +50,9 @@ public:
     }
 
     int color24bit = (targetColor[0] << 16) | (targetColor[1] << 8) | targetColor[2];
-    sendNEXTIONcmd("b0.bco=" + String(color24bit));
+    String cmd = String("b0.bco=");
+    cmd += color24bit;
+    sendNEXTIONcmd(cmd.c_str());
     sendNEXTIONcmd("ref b0");
 
     reset();
@@ -93,9 +105,20 @@ public:
   }
 
   void updateNextionDisplay() {
-    sendNEXTIONcmd("t1.txt=\"Red:" + String(colorValues[0]) + "\"");
-    sendNEXTIONcmd("t2.txt=\"Green:" + String(colorValues[1]) + "\"");
-    sendNEXTIONcmd("t3.txt=\"Blue:" + String(colorValues[2]) + "\"");
+    char buf[32];
+
+    // Red
+    snprintf(buf, sizeof(buf), "t1.txt=\"Red:%d\"",   colorValues[0]);
+    sendNEXTIONcmd(buf);
+
+    // Green
+    snprintf(buf, sizeof(buf), "t2.txt=\"Green:%d\"", colorValues[1]);
+    sendNEXTIONcmd(buf);
+
+    // Blue
+    snprintf(buf, sizeof(buf), "t3.txt=\"Blue:%d\"",  colorValues[2]);
+    sendNEXTIONcmd(buf);
+
     sendNEXTIONcmd("ref t1");
     sendNEXTIONcmd("ref t2");
     sendNEXTIONcmd("ref t3");

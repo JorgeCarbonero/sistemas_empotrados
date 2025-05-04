@@ -10,6 +10,7 @@ DodgeGame::DodgeGame(int pinX, int pinY)
 {}
 
 void DodgeGame::startGame() {
+    Serial.print("juego iniciado");
     _lastDir = NONE;
     _running = true;
 }
@@ -37,15 +38,17 @@ DodgeGame::Direction DodgeGame::readDirection() {
 }
 
 void DodgeGame::update() {
-    if (! _running) return;
-
+    if (!_running) return;
     Direction dir = readDirection();
     if (dir != _lastDir) {
         _lastDir = dir;
-        
+    
         Serial.print("Joystick apunta a: ");
         Serial.println(_dirNames[dir]);
 
-        sendNEXTIONcmd("vaUserDir.val=" + String(dir));
+        // Construir el comando Nextion y enviar como const char*
+        String cmd = String("vaUserDir.val=");
+        cmd += dir;
+        sendNEXTIONcmd(cmd.c_str());
     }
 }

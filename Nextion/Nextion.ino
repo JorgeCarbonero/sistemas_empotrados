@@ -1,25 +1,25 @@
 #include "NextionSoftSerial.h"
 #include "NextionObject.h"
 #include "SimonGame.h"
+#include "DodgeGame.h"
 
 // Pines físicos
 const int potPin = A0;
 const int redPin = 9;
 const int greenPin = 10;
 const int bluePin = 11;
-const int whitePin = 12
+const int whitePin = 12;
 const int buttonRed = 4;
 const int buttonGreen = 5;
 const int buttonBlue = 6;
 const int buttonWhite = 7;
-const int joyX = A3
-const int joyY = A4
+const int joyX = A3;
+const int joyY = A4;
 
 // SimonGame
 const int simonEntradas[4] = {buttonRed, buttonGreen, buttonBlue, buttonWhite};
 const int simonSalidas [4] = {redPin,   greenPin,   bluePin,   whitePin};
-SimonGame simon(simonEntradasm, simonsalidas)
-
+SimonGame simon(simonEntradas, simonSalidas);
 // DodgeGame
 DodgeGame dodge(joyX, joyY);
 
@@ -53,15 +53,15 @@ void setup() {
   pinMode(redPin, OUTPUT);
   pinMode(greenPin, OUTPUT);
   pinMode(bluePin, OUTPUT);
-  pinMode(whitePin, OUTPUT)
+  pinMode(whitePin, OUTPUT);
 
   pinMode(buttonRed, INPUT_PULLUP);
   pinMode(buttonGreen, INPUT_PULLUP);
   pinMode(buttonBlue, INPUT_PULLUP);
-  pinMode(buttonWhite, INPUT_PULLUP)
+  pinMode(buttonWhite, INPUT_PULLUP);
 
-  pinMode(_pinX, INPUT);
-  pinMode(_pinY, INPUT);
+  pinMode(joyX, INPUT);
+  pinMode(joyY, INPUT);
 
   randomSeed(analogRead(A1)); 
   resetColorMatcher();
@@ -69,7 +69,8 @@ void setup() {
 
 void loop() {
   String ev = listenNEXTION();
-  
+  char cmd[100];
+
   if (ev != "") {
     Serial.print("Evento recibido: ");
     Serial.println(ev.c_str());
@@ -83,14 +84,14 @@ void loop() {
       sendNEXTIONcmd("xstr 0,18,390,18,1,RED,WHITE,0,1,1,\"SYSTEM> ... bStart push\"");
     }
 
-    
+
 
     if (ev==bGame1){
-      handlePageChange(2)
+      handlePageChange(2);
     }
 
     if (ev==bGame2){
-      handlePageChange(3)
+      handlePageChange(3);
     }
 
     // Manejo de cambio de página
@@ -98,8 +99,9 @@ void loop() {
       handlePageChange(5);
     }
 
-    if (currentPage == "pageSimon") {
+    if (currentPage == "PageSimon") {
       if (ev == bGame1Start) {  // startSimonGame
+        Serial.print("Simon started")
         bool won = simon.playFullGame();
          if (won) {
           sendNEXTIONcmd("vaState.val=2");
@@ -108,16 +110,17 @@ void loop() {
         }
       } 
     }
-    
-    if (currentPage == "pageSimon") {
+    Serial.print("currentPage 1: "+ currentPage);
+
+    if (currentPage == "PageDodge") {
       if (ev == bGame2Start) { 
+        Serial.println("Juego Dodge iniciado");
         dodge.startGame();
       } else if (ev == bGame2End) {
-        dodge.endGame();
+        dodge.stopGame();
       }
     }
 
-    case ///// TAREK!!!
     // Comandos específicos de ColorMatcher
     if (currentPage == "pageColor") {
       if (ev == "[65001ffffffffffff]") {  // startColorMatcher
@@ -128,7 +131,7 @@ void loop() {
     }
   }
   
-  if (currentPage == "pageDodge") {
+  if (currentPage == "PageDodge") {
     dodge.update();
   }
 
@@ -186,7 +189,9 @@ void startColorMatcherGame() {
   targetColor[2] = random(0, 256);
   
   int color24bit = (targetColor[0] << 16) | (targetColor[1] << 8) | (targetColor[2]);
-  sendNEXTIONcmd("b0.bco=" + String(color24bit)); #texto 
+  String cmd = String("b0.bco=");  
+  cmd += color24bit;                
+  sendNEXTIONcmd(cmd.c_str()); 
   sendNEXTIONcmd("ref b0");
 
   resetColorMatcher();
@@ -203,7 +208,7 @@ void submitColorMatcherGame() {
   if (success) {
     sendNEXTIONcmd("game4=1");
   } else {
-    sendNEXTIONcmd("pageColor.fail.en=1"); #error
+    sendNEXTIONcmd("pageColor.fail.en=1"); //error
   }
   playingColorMatcher = false;
 }
@@ -233,9 +238,19 @@ void updateLEDColorMatcher() {
 }
 
 void sendCurrentRGBColorMatcher() {
-  sendNEXTIONcmd("t1.txt=\"Red:" + String(colorValues[0]) + "\"");
-  sendNEXTIONcmd("t2.txt=\"Green:" + String(colorValues[1]) + "\"");
-  sendNEXTIONcmd("t3.txt=\"Blue:" + String(colorValues[2]) + "\"");
+  char buf[32];
+
+  // Red
+  snprintf(buf, sizeof(buf), "t1.txt=\"Red:%d\"",   colorValues[0]);
+  sendNEXTIONcmd(buf);
+
+  // Green
+  snprintf(buf, sizeof(buf), "t2.txt=\"Green:%d\"", colorValues[1]);
+  sendNEXTIONcmd(buf);
+
+  // Blue
+  snprintf(buf, sizeof(buf), "t3.txt=\"Blue:%d\"",  colorValues[2]);
+  sendNEXTIONcmd(buf);
   sendNEXTIONcmd("ref t1");
   sendNEXTIONcmd("ref t2");
   sendNEXTIONcmd("ref t3");

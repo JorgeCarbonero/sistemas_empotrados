@@ -7,14 +7,14 @@
   #define bGame1         ("[65141ffffffffffff]")
   #define bGame1Start    ("STARTGAME1") 
   #define bGame2         ("[65151ffffffffffff]") 
-  #define bGame2Start    ("STARTGAME2") 
-  #define bGame2End      ("ENDGAME2") 
+  #define bGame2Start    ("[653181ffffffffffff]") 
+  #define bGame2End      ("[ffffffffffffffff]") 
   #define bGame4         ("[65171ffffffffffff]")
 
 
 
 
   // Juego ColorMatcher pageId 5
-  #define
-  #define
+  //#define
+  //#define
 #endif
