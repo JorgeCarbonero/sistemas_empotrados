@@ -7,14 +7,14 @@
 
 class SimonGame {
 public:
-    static const int NIVEL_MAX = 10;
+    static const int NIVEL_MAX = 9;
 
     static const char* const colorNames[4];
-    // Ahora solo recibimos entradas y salidas
+    // Ahora sólo recibimos entradas y salidas
     SimonGame(const int entradaPins[4],
               const int salidaPins[4]);
 
-    void update();                   // Una ronda: genera/muestra/lee
+    bool update();                   // Una ronda: genera/muestra/lee
     bool playFullGame();             // Juega todos los niveles seguidos
     int  getLevel() const;           // Nivel actual
 
@@ -29,9 +29,9 @@ private:
 
     void generaSecuencia();
     void muestraSecuencia();
-    void leeSecuencia();
+    bool leeSecuencia();
     void secuenciaError();
     void secuenciaCorrecta();
 };
 
-#endif 
+#endif

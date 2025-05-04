@@ -100,14 +100,10 @@ void loop() {
     }
 
     if (currentPage == "PageSimon") {
-      if (ev == bGame1Start) {  // startSimonGame
-        Serial.print("Simon started")
-        bool won = simon.playFullGame();
-         if (won) {
-          sendNEXTIONcmd("vaState.val=2");
-        } else {
-          sendNEXTIONcmd("vaState.val=1");
-        }
+      if (ev == bGame1Start || ev == bGame1Retry) {  // startSimonGame
+        ev = "";
+        Serial.print("Simon started");
+        simon.playFullGame();
       } 
     }
     Serial.print("currentPage 1: "+ currentPage);
