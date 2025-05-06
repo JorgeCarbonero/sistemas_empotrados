@@ -2,7 +2,7 @@
 
 // Textos para cada dirección
 const char* const DodgeGame::_dirNames[5] = {
-    "Ninguna", "Arriba", "Abajo", "Izquierda", "Derecha"
+    "Ninguna", "Arriba", "Abajo", "Derecha", "Izquierda"
 };
 
 DodgeGame::DodgeGame(int pinX, int pinY)

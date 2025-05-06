@@ -2,10 +2,8 @@
 #include "NextionObject.h"
 #include "SimonGame.h"
 #include "DodgeGame.h"
-#include "ColorMatcher.h"
 
 // Pines físicos
-const int potPin = A0;
 const int redPin = 9;
 const int greenPin = 10;
 const int bluePin = 11;
@@ -16,6 +14,7 @@ const int buttonBlue = 6;
 const int buttonYellow = 7;
 const int joyX = A3;
 const int joyY = A4;
+const int buttonJoy = 24;
 
 // SimonGame
 const int simonEntradas[4] = {buttonRed, buttonGreen, buttonBlue, buttonYellow};
@@ -23,13 +22,6 @@ const int simonSalidas [4] = {redPin,   greenPin,   bluePin,   yellowPin};
 SimonGame simon(simonEntradas, simonSalidas);
 // DodgeGame
 DodgeGame dodge(joyX, joyY);
-ColorMatcher colorMatcher(potPin, buttonRed, buttonGreen, buttonBlue);
-
-// Estado de ColorMatcher OBJETO
-bool playingColorMatcher = false;
-int selectedColor = 0;
-int colorValues[3] = {0, 0, 0};
-int targetColor[3] = {0, 0, 0};
 
 // Estados de pantalla
 String currentPage = "pageHome";
@@ -65,8 +57,6 @@ void setup() {
   pinMode(joyX, INPUT);
   pinMode(joyY, INPUT);
 
-  randomSeed(analogRead(A1)); 
-  colorMatcher.init();
 }
 
 void loop() {
@@ -76,14 +66,13 @@ void loop() {
   if (ev != "") {
     Serial.print("Evento recibido: ");
     Serial.println(ev.c_str());
-    //Serial.println(ev);
     
     if (ev==bStart) 
     {
       strcpy(cmd,"\r\nSYSTEM> bStart push");
       Serial.println(cmd);
 
-      sendNEXTIONcmd("xstr 0,18,390,18,1,RED,WHITE,0,1,1,\"SYSTEM> ... bStart push\"");
+      //sendNEXTIONcmd("xstr 0,18,390,18,1,RED,WHITE,0,1,1,\"SYSTEM> ... bStart push\"");
     }
 
     if (ev==bGame1){
@@ -94,14 +83,8 @@ void loop() {
       handlePageChange(3);
     }
 
-    // Manejo de cambio de página
-    if (ev==bGame4) {
-      colorMatcher.setPlaying(false);
-      handlePageChange(5);
-    }
-
     if (currentPage == "pageSimon") {
-      if (ev == bGame1Start || ev == bGame1Retry) {  // startSimonGame
+      if (ev == bGame1Start || ev == bGame1Retry || ev == bGame1Start2) {  // startSimonGame
         ev = "";
         Serial.print("Simon started");
         simon.playFullGame();
@@ -114,12 +97,9 @@ void loop() {
         Serial.println("Juego Dodge iniciado");
         dodge.startGame();
       } else if (ev == bGame2End) {
+        Serial.println("Juego Dodge finalizado");
         dodge.stopGame();
       }
-    }
-
-    if (currentPage == "pageColor") {
-      colorMatcher.handleEvent(ev);
     }
 
   }
@@ -132,10 +112,6 @@ void loop() {
     dodge.update();
   }
 
-  if (currentPage == "pageColor") {
-    colorMatcher.update();
-  }
-  
   delay(100);
 }
 
@@ -156,10 +132,6 @@ void handlePageChange(int pageId) {
     case 3:
       currentPage = "pageDodge";
       pageCommand = "page 3";
-      break;
-    case 5: 
-      currentPage = "pageColor"; 
-      pageCommand = "page pageColor";
       break;
     default: 
       currentPage = "unknown";

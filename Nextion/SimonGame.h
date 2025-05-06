@@ -8,7 +8,7 @@
 
 class SimonGame {
 public:
-    static const int NIVEL_MAX = 9;
+    static const int NIVEL_MAX = 6;
 
     static const char* const colorNames[4];
     // Ahora sólo recibimos entradas y salidas

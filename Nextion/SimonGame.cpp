@@ -23,6 +23,8 @@ void SimonGame::update() {
     if (_nivelActual == NIVEL_MAX) {
         sendNEXTIONcmd("vaState.val=2");
         Serial.print("Simon game won");
+        _running = false;
+        return;
     }
     if (_nivelActual == 4) generaSecuencia();
     muestraSecuencia();
@@ -70,6 +72,10 @@ void SimonGame::muestraSecuencia() {
         delay(_velocidad);
         digitalWrite(_salida[idx], LOW);
         delay(200);
+        cmd = String("t0.txt= ");
+        sendNEXTIONcmd(cmd.c_str());
+        sendNEXTIONcmd("ref t0");
+        delay(100);
     }
     String cmd = String("t0.txt=\"Your turn\"");
     sendNEXTIONcmd(cmd.c_str());
