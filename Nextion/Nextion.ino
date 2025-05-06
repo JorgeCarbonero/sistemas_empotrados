@@ -118,15 +118,8 @@ void loop() {
       }
     }
 
-
     if (currentPage == "pageColor") {
-      Serial.println("MAL");
-      if (ev == bColorStart) {
-        Serial.println("Start");
-      }
-      if (ev == bColorSubmit) {
-        Serial.println("submit");
-      }
+      colorMatcher.handleEvent(ev);
     }
 
   }

@@ -1,7 +1,5 @@
-// ---------------------------
-//  Archivo: ColorMatcher.cpp
-// ---------------------------
 #include "ColorMatcher.h"
+#include "NextionObject.h"
 
 ColorMatcher::ColorMatcher(int potPin, int btnR, int btnG, int btnB)
  : _potPin(potPin), _buttonRed(btnR), _buttonGreen(btnG), _buttonBlue(btnB) {
@@ -20,7 +18,6 @@ void ColorMatcher::init() {
 void ColorMatcher::handleEvent(const String& ev) {
     if (ev == bColorStart) {
         if (!_isPlaying) {
-          Serial.print("Hello im dead");          
           startGame();
         }
         else            stopGame();
