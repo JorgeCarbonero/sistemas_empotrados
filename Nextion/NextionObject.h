@@ -13,6 +13,7 @@
   #define bGame4         ("[65171ffffffffffff]")
   #define bColorStart    ("[ffffffa2ffa2ffa2]")
   #define bColorSubmit   ("[ffa2ffdcffdcffdc]")
+  #define bReturn        ("[4ffffffffffff]")
 
 
 #endif

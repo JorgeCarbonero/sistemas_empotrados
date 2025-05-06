@@ -4,6 +4,7 @@
 
 #include <Arduino.h>
 #include "NextionSoftSerial.h"
+#include "NextionObject.h"
 
 class SimonGame {
 public:
@@ -14,9 +15,10 @@ public:
     SimonGame(const int entradaPins[4],
               const int salidaPins[4]);
 
-    bool update();                   // Una ronda: genera/muestra/lee
-    bool playFullGame();             // Juega todos los niveles seguidos
+    void update();                   // Una ronda: genera/muestra/lee
+    void playFullGame();             // Juega todos los niveles seguidos
     int  getLevel() const;           // Nivel actual
+    void stopGame();
 
 private:
     int _entrada[4];
@@ -26,6 +28,7 @@ private:
     int _velocidad;
     int _secuencia[NIVEL_MAX];
     int _secuenciaUsuario[NIVEL_MAX];
+    bool _running;
 
     void generaSecuencia();
     void muestraSecuencia();

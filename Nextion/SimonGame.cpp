@@ -3,7 +3,7 @@
 
 // Definición de los nombres
 const char* const SimonGame::colorNames[4] = {
-    "Rojo", "Verde", "Azul", "Blanco"
+    "Red", "Green", "Blue", "Yellow"
 };
 
 SimonGame::SimonGame(const int entradaPins[4],
@@ -18,30 +18,23 @@ SimonGame::SimonGame(const int entradaPins[4],
     }
 }
 
-bool SimonGame::update() {
-    if (_nivelActual == 4) generaSecuencia();
-    muestraSecuencia();
-    // Renombrada la variable para no chocarnos con la palabra reservada
-    bool continueGame = leeSecuencia();
-    return continueGame;
-}
-
-bool SimonGame::playFullGame() {
-    _nivelActual = 4;
-    _velocidad   = 500;
-    bool continueGame;
-
-    do {
-        continueGame = update();
-        if (_nivelActual == 1) return false;  // fallaste en el nivel 4
-    } while (continueGame && (_nivelActual > 4 && _nivelActual < NIVEL_MAX));
-
+void SimonGame::update() {
+  if (_running == true) {
     if (_nivelActual == NIVEL_MAX) {
         sendNEXTIONcmd("vaState.val=2");
         Serial.print("Simon game won");
     }
+    if (_nivelActual == 4) generaSecuencia();
+    muestraSecuencia();
+    // Renombrada la variable para no chocarnos con la palabra reservada
+    leeSecuencia();
+  } 
+}
 
-    return true;
+void SimonGame::playFullGame() {
+    _nivelActual = 4;
+    _velocidad   = 500;
+    _running = true;
 }
 
 int SimonGame::getLevel() const {
@@ -62,14 +55,14 @@ void SimonGame::muestraSecuencia() {
         int idx = _secuencia[i];
 
         // Mostrar en Nextion
-        String cmd = String("t0.txt=\"Mostrando: ");
+        String cmd = String("t0.txt=\"Showing: ");
         cmd += colorNames[idx];
         cmd += "\"";
         sendNEXTIONcmd(cmd.c_str());
         sendNEXTIONcmd("ref t0");
 
         // Mostrar en Arduino
-        Serial.print("Mostrando: ");
+        Serial.print("Showing: ");
         Serial.println(colorNames[idx]);
 
         // Encender LED
@@ -78,6 +71,9 @@ void SimonGame::muestraSecuencia() {
         digitalWrite(_salida[idx], LOW);
         delay(200);
     }
+    String cmd = String("t0.txt=\"Your turn\"");
+    sendNEXTIONcmd(cmd.c_str());
+    sendNEXTIONcmd("ref t0");
 }
 
 bool SimonGame::leeSecuencia() {
@@ -87,14 +83,14 @@ bool SimonGame::leeSecuencia() {
             for (int btn = 0; btn < 4; btn++) {
                 if (digitalRead(_entrada[btn]) == HIGH) {
                     // Mostrar en Nextion
-                    String cmd = String("t0.txt=\"Has pulsado: ");
+                    String cmd = String("t0.txt=\"You've pressed: ");
                     cmd += colorNames[btn];
                     cmd += "\"";
                     sendNEXTIONcmd(cmd.c_str());
                     sendNEXTIONcmd("ref t0");
 
                     // Mostrar en Arduino
-                    Serial.print("Has pulsado: ");
+                    Serial.print("You've pressed: ");
                     Serial.println(colorNames[btn]);
 
                     // Feedback visual
@@ -106,7 +102,6 @@ bool SimonGame::leeSecuencia() {
                     _secuenciaUsuario[i] = btn;
                     leido = true;
                     if (_secuenciaUsuario[i] != _secuencia[i]) {
-                        Serial.print("hola");
                         secuenciaError();
                         return false;
                     }
@@ -125,6 +120,7 @@ void SimonGame::secuenciaError() {
         for (int i = 0; i < 4; i++) digitalWrite(_salida[i], LOW);
         delay(250);
     }
+    _running = false;
     sendNEXTIONcmd("vaState.val=1");
     Serial.println("Simon game lost");
 }
@@ -133,4 +129,8 @@ void SimonGame::secuenciaCorrecta() {
     if (_nivelActual < NIVEL_MAX) _nivelActual++;
     _velocidad = max(100, _velocidad - 50);
     delay(200);
+}
+
+void SimonGame::stopGame(){
+  _running = false;
 }

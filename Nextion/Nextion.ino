@@ -9,17 +9,17 @@ const int potPin = A0;
 const int redPin = 9;
 const int greenPin = 10;
 const int bluePin = 11;
-const int whitePin = 12;
+const int yellowPin = 12;
 const int buttonRed = 4;
 const int buttonGreen = 5;
 const int buttonBlue = 6;
-const int buttonWhite = 7;
+const int buttonYellow = 7;
 const int joyX = A3;
 const int joyY = A4;
 
 // SimonGame
-const int simonEntradas[4] = {buttonRed, buttonGreen, buttonBlue, buttonWhite};
-const int simonSalidas [4] = {redPin,   greenPin,   bluePin,   whitePin};
+const int simonEntradas[4] = {buttonRed, buttonGreen, buttonBlue, buttonYellow};
+const int simonSalidas [4] = {redPin,   greenPin,   bluePin,   yellowPin};
 SimonGame simon(simonEntradas, simonSalidas);
 // DodgeGame
 DodgeGame dodge(joyX, joyY);
@@ -55,12 +55,12 @@ void setup() {
   pinMode(redPin, OUTPUT);
   pinMode(greenPin, OUTPUT);
   pinMode(bluePin, OUTPUT);
-  pinMode(whitePin, OUTPUT);
+  pinMode(yellowPin, OUTPUT);
 
   pinMode(buttonRed, INPUT_PULLUP);
   pinMode(buttonGreen, INPUT_PULLUP);
   pinMode(buttonBlue, INPUT_PULLUP);
-  pinMode(buttonWhite, INPUT_PULLUP);
+  pinMode(buttonYellow, INPUT_PULLUP);
 
   pinMode(joyX, INPUT);
   pinMode(joyY, INPUT);
@@ -100,7 +100,7 @@ void loop() {
       handlePageChange(5);
     }
 
-    if (currentPage == "PageSimon") {
+    if (currentPage == "pageSimon") {
       if (ev == bGame1Start || ev == bGame1Retry) {  // startSimonGame
         ev = "";
         Serial.print("Simon started");
@@ -109,7 +109,7 @@ void loop() {
     }
     Serial.println("currentPage 1: "+ currentPage);
 
-    if (currentPage == "PageDodge") {
+    if (currentPage == "pageDodge") {
       if (ev == bGame2Start) { 
         Serial.println("Juego Dodge iniciado");
         dodge.startGame();
@@ -118,10 +118,6 @@ void loop() {
       }
     }
 
-    if (currentPage == "PageSimon" && ev == bGame1Start) {
-      bool won = simon.playFullGame();
-      sendNEXTIONcmd((String("vaState.val=") + (won ? "2" : "1")).c_str());
-    }
 
     if (currentPage == "pageColor") {
       Serial.println("MAL");
@@ -134,8 +130,12 @@ void loop() {
     }
 
   }
+
+  if (currentPage == "pageSimon") {
+    simon.update();
+  }
   
-  if (currentPage == "PageDodge") {
+  if (currentPage == "pageDodge") {
     dodge.update();
   }
 
@@ -149,6 +149,7 @@ void loop() {
 // Manejo de cambio de página
 void handlePageChange(int pageId) {
   String pageCommand;
+  String prevPage = currentPage;
   
   switch(pageId) {
     case 0: 
@@ -156,11 +157,11 @@ void handlePageChange(int pageId) {
       pageCommand = "page 0";
       break;
     case 2:
-      currentPage = "PageSimon";
+      currentPage = "pageSimon";
       pageCommand = "page 2";
       break;
     case 3:
-      currentPage = "PageDodge";
+      currentPage = "pageDodge";
       pageCommand = "page 3";
       break;
     case 5: 
@@ -171,6 +172,10 @@ void handlePageChange(int pageId) {
       currentPage = "unknown";
       pageCommand = "page 0";  // Por defecto volvemos a página 0
       break;
+    
+    if (prevPage == "pageSimon"){
+      simon.stopGame();
+    }
   }
   
   // Confirmar el cambio de página a Nextion
