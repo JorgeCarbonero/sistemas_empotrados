@@ -41,7 +41,7 @@ void setup() {
   sendNEXTIONcmd("page 0");
   strcpy(cmd,"\r\nSYSTEM> Initializing ... Nextion_SoftSerial");
   Serial.println(cmd); 
-  sendNEXTIONcmd("xstr 0,18,390,18,1,RED,WHITE,0,1,1,\"SYSTEM> Initializing ... Nextion_SoftSerial\"");
+  //sendNEXTIONcmd("xstr 0,18,390,18,1,RED,WHITE,0,1,1,\"SYSTEM> Initializing ... Nextion_SoftSerial\"");
   delay(1500);
   
   pinMode(redPin, OUTPUT);
@@ -110,6 +110,13 @@ void loop() {
   
   if (currentPage == "pageDodge") {
     dodge.update();
+  }
+
+  if (digitalRead(buttonJoy) == LOW) {
+    sendNEXTIONcmd("game1=1");
+    sendNEXTIONcmd("game2=1");
+    sendNEXTIONcmd("game3=1");
+    sendNEXTIONcmd("game4=1");
   }
 
   delay(100);
