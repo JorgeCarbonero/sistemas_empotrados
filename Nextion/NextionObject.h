@@ -10,7 +10,7 @@
   #define bGame1End      ("[1affffffffffff]")
   #define bGame1Retry    ("[ffe1ffa2ffa2ffe1]")
   #define bGame2         ("[65151ffffffffffff]") 
-  #define bGame2Start    ("[653181ffffffffffff]") 
+  #define bGame2Start    ("[653151ffffffffffff]") 
   #define bGame2End      ("[ffe2ffe2ffe2ffe2]") 
   #define bReturn        ("[4ffffffffffff]")
 

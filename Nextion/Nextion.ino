@@ -111,14 +111,14 @@ void loop() {
   if (currentPage == "pageDodge") {
     dodge.update();
   }
-
-  if (digitalRead(buttonJoy) == LOW) {
+  /*
+  if (digitalRead(buttonJoy) == HIGH) {
     sendNEXTIONcmd("game1=1");
     sendNEXTIONcmd("game2=1");
     sendNEXTIONcmd("game3=1");
     sendNEXTIONcmd("game4=1");
   }
-
+  */
   delay(100);
 }
 
